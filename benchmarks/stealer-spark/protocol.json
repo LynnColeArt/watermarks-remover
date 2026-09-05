@@ -1,0 +1,64 @@
+{
+  "status": "predeclared; results not yet observed",
+  "question": "Does increasing the training corpus improve held-out recovery under a fixed local model and watermark?",
+  "model": "HuggingFaceTB/SmolLM2-135M-Instruct",
+  "model_revision": "12fd25f77366fa6b3b4b768ec3050bf629380bac",
+  "train": 1024,
+  "calibration": 256,
+  "evaluation": 256,
+  "budgets": [
+    64,
+    256,
+    1024
+  ],
+  "context_len": 4,
+  "min_matches": 5,
+  "target_fpr": 0.05,
+  "max_new_tokens": 128,
+  "batch_size": 32,
+  "seed": 20260906,
+  "dtype": "float32",
+  "arms": [
+    "watermarked",
+    "baseline",
+    "control"
+  ],
+  "hardware": "NVIDIA GB10 / ARM64",
+  "runtime_image_id": "sha256:2cdd7924d3989dad733d53fcf6ba86fc15c890b608de5022be91e0fcf56ecf0f",
+  "primary_outcomes": [
+    "held-out pair coverage",
+    "scorable calibration count",
+    "conditional TPR/FPR with abstentions and Wilson intervals"
+  ],
+  "exploratory_outcomes": [
+    "scorable AUROC",
+    "unique matched-pair score/g-value Spearman correlation"
+  ],
+  "reference_sanity_rule": "AUROC >= 0.8 and sensitivity >= 0.5",
+  "removal_gate": "Do not run scorer-assisted removal unless held-out estimator discrimination and coverage justify a separate preregistered comparison.",
+  "comparison_scope": "Nested budgets within this run. Corpus, seed, runtime, and hardware differ from the small pilot; cross-run differences are not a pure data-volume effect.",
+  "prompt_provenance": {
+    "dataset": "databricks/databricks-dolly-15k",
+    "revision": "bdd27f4d94b9c1f951818a7da7fd7aeea5dbff1a",
+    "source_url": "https://huggingface.co/datasets/databricks/databricks-dolly-15k/resolve/bdd27f4d94b9c1f951818a7da7fd7aeea5dbff1a/databricks-dolly-15k.jsonl",
+    "source_sha256": "2df9083338b4abd6bceb5635764dab5d833b393b55759dffb0959b6fcbf794ec",
+    "license": "CC-BY-SA-3.0",
+    "attribution": "Databricks, databricks-dolly-15k contributors",
+    "license_url": "https://creativecommons.org/licenses/by-sa/3.0/",
+    "changes": "Selected context-free instructions in four categories, length 40\u20131000 characters; stripped surrounding whitespace and removed NFKC/case/whitespace-normalized duplicates. Human answers are excluded. No near-duplicate semantic filtering.",
+    "input_rows": 15011,
+    "selected_rows": 5150,
+    "excluded": {
+      "category_or_context": 6603,
+      "length": 3191,
+      "normalized_duplicate": 67
+    },
+    "categories": {
+      "open_qa": 2031,
+      "brainstorming": 1381,
+      "creative_writing": 559,
+      "general_qa": 1179
+    },
+    "prompts_sha256": "64fe8d003cd5bf25cd9eba9aafcfb7982b77f36412d0da52acccee05ebe07460"
+  }
+}
