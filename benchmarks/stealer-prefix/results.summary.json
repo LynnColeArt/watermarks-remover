@@ -1,0 +1,457 @@
+{
+  "aggregation": "means and min/max across three seeds; range is not a confidence interval",
+  "results": [
+    {
+      "strategy": "passive",
+      "estimator": "legacy",
+      "fit_arm": "watermarked",
+      "anchor": {
+        "pair_coverage": {
+          "mean": 0.029947916666666668,
+          "min": 0.029296875,
+          "max": 0.0302734375,
+          "n_seeds": 3
+        },
+        "baseline_mass_coverage_within_top_candidates": {
+          "mean": 0.450051246193068,
+          "min": 0.3791002612465141,
+          "max": 0.5044615415554256,
+          "n_seeds": 3
+        },
+        "spearman_on_matched_pairs": {
+          "mean": 0.46220211887743917,
+          "min": 0.3857027397045032,
+          "max": 0.5394378390670693,
+          "n_seeds": 3
+        },
+        "mean_within_context_spearman": null,
+        "sign_accuracy_for_absolute_effect_at_least_0.2": {
+          "mean": 0.6405122655122655,
+          "min": 0.5238095238095238,
+          "max": 0.7727272727272727,
+          "n_seeds": 3
+        }
+      },
+      "novel": {
+        "pair_coverage": {
+          "mean": 0.0009765625,
+          "min": 0.0009765625,
+          "max": 0.0009765625,
+          "n_seeds": 3
+        },
+        "baseline_mass_coverage_within_top_candidates": {
+          "mean": 0.005070978020725641,
+          "min": 0.002495969144161062,
+          "max": 0.007944421520222927,
+          "n_seeds": 3
+        },
+        "spearman_on_matched_pairs": null,
+        "mean_within_context_spearman": null,
+        "sign_accuracy_for_absolute_effect_at_least_0.2": {
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0,
+          "n_seeds": 3
+        }
+      }
+    },
+    {
+      "strategy": "passive",
+      "estimator": "legacy",
+      "fit_arm": "control",
+      "anchor": {
+        "pair_coverage": {
+          "mean": 0.029947916666666668,
+          "min": 0.029296875,
+          "max": 0.0302734375,
+          "n_seeds": 3
+        },
+        "baseline_mass_coverage_within_top_candidates": {
+          "mean": 0.4776540654687057,
+          "min": 0.442047448077758,
+          "max": 0.5440649198481861,
+          "n_seeds": 3
+        },
+        "spearman_on_matched_pairs": {
+          "mean": -0.28253886588455807,
+          "min": -0.5859876577530726,
+          "max": -0.06543171477129965,
+          "n_seeds": 3
+        },
+        "mean_within_context_spearman": null,
+        "sign_accuracy_for_absolute_effect_at_least_0.2": {
+          "mean": 0.15470439383482862,
+          "min": 0.043478260869565216,
+          "max": 0.2777777777777778,
+          "n_seeds": 3
+        }
+      },
+      "novel": {
+        "pair_coverage": {
+          "mean": 0.0009765625,
+          "min": 0.0,
+          "max": 0.001953125,
+          "n_seeds": 3
+        },
+        "baseline_mass_coverage_within_top_candidates": {
+          "mean": 0.003674257357037478,
+          "min": 0.0,
+          "max": 0.010348345073664524,
+          "n_seeds": 3
+        },
+        "spearman_on_matched_pairs": null,
+        "mean_within_context_spearman": null,
+        "sign_accuracy_for_absolute_effect_at_least_0.2": {
+          "mean": 0.25,
+          "min": 0.0,
+          "max": 0.5,
+          "n_seeds": 2
+        }
+      }
+    },
+    {
+      "strategy": "passive",
+      "estimator": "uncertainty",
+      "fit_arm": "watermarked",
+      "anchor": {
+        "pair_coverage": {
+          "mean": 0.046223958333333336,
+          "min": 0.0439453125,
+          "max": 0.0478515625,
+          "n_seeds": 3
+        },
+        "baseline_mass_coverage_within_top_candidates": {
+          "mean": 0.5615753956638102,
+          "min": 0.5348731788209635,
+          "max": 0.5993366081009642,
+          "n_seeds": 3
+        },
+        "spearman_on_matched_pairs": {
+          "mean": 0.6803713809477732,
+          "min": 0.6468046987049477,
+          "max": 0.7191717130335755,
+          "n_seeds": 3
+        },
+        "mean_within_context_spearman": {
+          "mean": 0.8660254037844387,
+          "min": 0.8660254037844387,
+          "max": 0.8660254037844387,
+          "n_seeds": 1
+        },
+        "sign_accuracy_for_absolute_effect_at_least_0.2": {
+          "mean": 0.7271879889477013,
+          "min": 0.6764705882352942,
+          "max": 0.7631578947368421,
+          "n_seeds": 3
+        }
+      },
+      "novel": {
+        "pair_coverage": {
+          "mean": 0.0006510416666666666,
+          "min": 0.0,
+          "max": 0.001953125,
+          "n_seeds": 3
+        },
+        "baseline_mass_coverage_within_top_candidates": {
+          "mean": 0.001769255011693726,
+          "min": 0.0,
+          "max": 0.005307765035081178,
+          "n_seeds": 3
+        },
+        "spearman_on_matched_pairs": null,
+        "mean_within_context_spearman": null,
+        "sign_accuracy_for_absolute_effect_at_least_0.2": {
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0,
+          "n_seeds": 1
+        }
+      }
+    },
+    {
+      "strategy": "passive",
+      "estimator": "uncertainty",
+      "fit_arm": "control",
+      "anchor": {
+        "pair_coverage": {
+          "mean": 0.046549479166666664,
+          "min": 0.044921875,
+          "max": 0.0478515625,
+          "n_seeds": 3
+        },
+        "baseline_mass_coverage_within_top_candidates": {
+          "mean": 0.5951935719836191,
+          "min": 0.5535893577432516,
+          "max": 0.6170505082331725,
+          "n_seeds": 3
+        },
+        "spearman_on_matched_pairs": {
+          "mean": -0.044526294623213135,
+          "min": -0.28967760745194937,
+          "max": 0.2979118075056694,
+          "n_seeds": 3
+        },
+        "mean_within_context_spearman": {
+          "mean": 0.2886751345948129,
+          "min": -0.8660254037844387,
+          "max": 0.8660254037844387,
+          "n_seeds": 3
+        },
+        "sign_accuracy_for_absolute_effect_at_least_0.2": {
+          "mean": 0.38078703703703703,
+          "min": 0.25,
+          "max": 0.53125,
+          "n_seeds": 3
+        }
+      },
+      "novel": {
+        "pair_coverage": {
+          "mean": 0.0009765625,
+          "min": 0.0,
+          "max": 0.0029296875,
+          "n_seeds": 3
+        },
+        "baseline_mass_coverage_within_top_candidates": {
+          "mean": 0.0019940640108430294,
+          "min": 0.0,
+          "max": 0.005982192032529089,
+          "n_seeds": 3
+        },
+        "spearman_on_matched_pairs": {
+          "mean": -0.8660254037844387,
+          "min": -0.8660254037844387,
+          "max": -0.8660254037844387,
+          "n_seeds": 1
+        },
+        "mean_within_context_spearman": {
+          "mean": -0.8660254037844387,
+          "min": -0.8660254037844387,
+          "max": -0.8660254037844387,
+          "n_seeds": 1
+        },
+        "sign_accuracy_for_absolute_effect_at_least_0.2": {
+          "mean": 0.0,
+          "min": 0.0,
+          "max": 0.0,
+          "n_seeds": 1
+        }
+      }
+    },
+    {
+      "strategy": "repeated",
+      "estimator": "legacy",
+      "fit_arm": "watermarked",
+      "anchor": {
+        "pair_coverage": {
+          "mean": 0.16569010416666666,
+          "min": 0.1455078125,
+          "max": 0.201171875,
+          "n_seeds": 3
+        },
+        "baseline_mass_coverage_within_top_candidates": {
+          "mean": 0.7903838618615109,
+          "min": 0.7359712440350492,
+          "max": 0.8209008788935737,
+          "n_seeds": 3
+        },
+        "spearman_on_matched_pairs": {
+          "mean": 0.6876562705057031,
+          "min": 0.6641730483361487,
+          "max": 0.7184665919607482,
+          "n_seeds": 3
+        },
+        "mean_within_context_spearman": {
+          "mean": 0.619429180932089,
+          "min": 0.5583827314476146,
+          "max": 0.6635212184814099,
+          "n_seeds": 3
+        },
+        "sign_accuracy_for_absolute_effect_at_least_0.2": {
+          "mean": 0.8075446631846792,
+          "min": 0.7894736842105263,
+          "max": 0.824,
+          "n_seeds": 3
+        }
+      },
+      "novel": {
+        "pair_coverage": {
+          "mean": 0.0,
+          "min": 0.0,
+          "max": 0.0,
+          "n_seeds": 3
+        },
+        "baseline_mass_coverage_within_top_candidates": {
+          "mean": 0.0,
+          "min": 0.0,
+          "max": 0.0,
+          "n_seeds": 3
+        },
+        "spearman_on_matched_pairs": null,
+        "mean_within_context_spearman": null,
+        "sign_accuracy_for_absolute_effect_at_least_0.2": null
+      }
+    },
+    {
+      "strategy": "repeated",
+      "estimator": "legacy",
+      "fit_arm": "control",
+      "anchor": {
+        "pair_coverage": {
+          "mean": 0.2766927083333333,
+          "min": 0.265625,
+          "max": 0.2861328125,
+          "n_seeds": 3
+        },
+        "baseline_mass_coverage_within_top_candidates": {
+          "mean": 0.929079016151564,
+          "min": 0.9198610340944701,
+          "max": 0.9450532432442961,
+          "n_seeds": 3
+        },
+        "spearman_on_matched_pairs": {
+          "mean": -0.10082817292221759,
+          "min": -0.2919258447801403,
+          "max": 0.06174904012340554,
+          "n_seeds": 3
+        },
+        "mean_within_context_spearman": {
+          "mean": -0.11791092249943752,
+          "min": -0.25794104178671295,
+          "max": 0.09157877323973687,
+          "n_seeds": 3
+        },
+        "sign_accuracy_for_absolute_effect_at_least_0.2": {
+          "mean": 0.3016307968301686,
+          "min": 0.27983539094650206,
+          "max": 0.3382352941176471,
+          "n_seeds": 3
+        }
+      },
+      "novel": {
+        "pair_coverage": {
+          "mean": 0.0,
+          "min": 0.0,
+          "max": 0.0,
+          "n_seeds": 3
+        },
+        "baseline_mass_coverage_within_top_candidates": {
+          "mean": 0.0,
+          "min": 0.0,
+          "max": 0.0,
+          "n_seeds": 3
+        },
+        "spearman_on_matched_pairs": null,
+        "mean_within_context_spearman": null,
+        "sign_accuracy_for_absolute_effect_at_least_0.2": null
+      }
+    },
+    {
+      "strategy": "repeated",
+      "estimator": "uncertainty",
+      "fit_arm": "watermarked",
+      "anchor": {
+        "pair_coverage": {
+          "mean": 0.3336588541666667,
+          "min": 0.2978515625,
+          "max": 0.3662109375,
+          "n_seeds": 3
+        },
+        "baseline_mass_coverage_within_top_candidates": {
+          "mean": 0.9482973071556612,
+          "min": 0.9404337205163547,
+          "max": 0.9538127389535065,
+          "n_seeds": 3
+        },
+        "spearman_on_matched_pairs": {
+          "mean": 0.736907157562067,
+          "min": 0.7015506766577118,
+          "max": 0.7707748187472565,
+          "n_seeds": 3
+        },
+        "mean_within_context_spearman": {
+          "mean": 0.6562960268316684,
+          "min": 0.5803222993442424,
+          "max": 0.724474838890416,
+          "n_seeds": 3
+        },
+        "sign_accuracy_for_absolute_effect_at_least_0.2": {
+          "mean": 0.8870807621799887,
+          "min": 0.874251497005988,
+          "max": 0.8949044585987261,
+          "n_seeds": 3
+        }
+      },
+      "novel": {
+        "pair_coverage": {
+          "mean": 0.0,
+          "min": 0.0,
+          "max": 0.0,
+          "n_seeds": 3
+        },
+        "baseline_mass_coverage_within_top_candidates": {
+          "mean": 0.0,
+          "min": 0.0,
+          "max": 0.0,
+          "n_seeds": 3
+        },
+        "spearman_on_matched_pairs": null,
+        "mean_within_context_spearman": null,
+        "sign_accuracy_for_absolute_effect_at_least_0.2": null
+      }
+    },
+    {
+      "strategy": "repeated",
+      "estimator": "uncertainty",
+      "fit_arm": "control",
+      "anchor": {
+        "pair_coverage": {
+          "mean": 0.3720703125,
+          "min": 0.3505859375,
+          "max": 0.388671875,
+          "n_seeds": 3
+        },
+        "baseline_mass_coverage_within_top_candidates": {
+          "mean": 0.959237874776641,
+          "min": 0.954926024999091,
+          "max": 0.967135740257345,
+          "n_seeds": 3
+        },
+        "spearman_on_matched_pairs": {
+          "mean": -0.012903900013326525,
+          "min": -0.09296474343902439,
+          "max": 0.06913996851959575,
+          "n_seeds": 3
+        },
+        "mean_within_context_spearman": {
+          "mean": -0.043498740299417187,
+          "min": -0.09606685551241693,
+          "max": 0.0468965069686184,
+          "n_seeds": 3
+        },
+        "sign_accuracy_for_absolute_effect_at_least_0.2": {
+          "mean": 0.4371446085068002,
+          "min": 0.42209631728045327,
+          "max": 0.4594594594594595,
+          "n_seeds": 3
+        }
+      },
+      "novel": {
+        "pair_coverage": {
+          "mean": 0.0,
+          "min": 0.0,
+          "max": 0.0,
+          "n_seeds": 3
+        },
+        "baseline_mass_coverage_within_top_candidates": {
+          "mean": 0.0,
+          "min": 0.0,
+          "max": 0.0,
+          "n_seeds": 3
+        },
+        "spearman_on_matched_pairs": null,
+        "mean_within_context_spearman": null,
+        "sign_accuracy_for_absolute_effect_at_least_0.2": null
+      }
+    }
+  ]
+}
