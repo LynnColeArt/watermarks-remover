@@ -194,3 +194,13 @@ sampling-table hashes, dtype, device, dependency versions, and source hashes.
 runtime, and `generation.json` marks a complete corpus. `--score-only` accepts
 only `--out` and uses the saved protocol; it cannot silently retune thresholds
 on the held-out set. Analysis source hashes are recorded separately.
+
+When mapping a numeric host UID into a container without a matching passwd
+entry, set writable cache paths explicitly, for example
+`TORCHINDUCTOR_CACHE_DIR=/workspace/work/torch-cache` and
+`TRITON_CACHE_DIR=/workspace/work/triton-cache`. Otherwise PyTorch compilation
+imports can fail while looking up the username, before model loading begins.
+Set `HF_HOME=/workspace/work/hf-cache` for the model cache as well. Keep these
+paths under the mounted experiment checkout. A detached container can run the
+collection command followed by `--score-only`; restart it with `--resume` to
+reuse completed batches. Keep its image ID and launch command with the results.
