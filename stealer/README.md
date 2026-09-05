@@ -160,3 +160,25 @@ HF_TOKEN=$(cat ~/.hf_token) python3 stealer/download_prompts.py --count 30000
   *stolen* prior, not necessarily the mark a vendor's detector checks.
 - Remove provenance marks only on content **you own or are authorized to
   process**; see [`skills/remove-ai-marks/references/ethics.md`](../skills/remove-ai-marks/references/ethics.md).
+
+## Model tokenization and controlled evaluation
+
+The optional `build --tokenizer <Hugging-Face-model-or-path>` adapter uses exact
+model token IDs as strings. Pin `--tokenizer-revision <commit>` when using a
+remote tokenizer. A tokenizer identity and fingerprint are stored in the scorer;
+`detect` loads that tokenizer automatically and rejects a changed fingerprint.
+Legacy tables without tokenizer metadata continue to use the word tokenizer.
+The optional dependency is `transformers`; core word-token scoring remains stdlib.
+
+```sh
+python3 stealer/steal.py build --replies target.jsonl --baseline baseline.jsonl \
+  --tokenizer HuggingFaceTB/SmolLM2-135M-Instruct \
+  --tokenizer-revision 12fd25f77366fa6b3b4b768ec3050bf629380bac \
+  --ctx 4 --out s_star.json
+python3 stealer/steal.py detect --s-star s_star.json --text "Text to inspect"
+```
+
+[The controlled local evaluation](../docs/stealer-evaluation.md) measures
+held-out coverage, calibrated detection, token alignment with known SynthID
+preferences, and an unwatermarked-versus-unwatermarked negative control. It is a
+research pilot, not a vendor detector or an integrated removal pipeline.

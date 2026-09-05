@@ -50,3 +50,34 @@ def count_ngrams(
             bucket[tok] = bucket.get(tok, 0) + 1
             context_totals[context] += 1
     return context_map, context_totals, unigrams
+
+
+def load_tokenizer(name: str = "word", revision: str | None = None):
+    """Return a tokenizer and serializable identity; HF support is optional.
+
+    Token IDs are stored as decimal strings, so JSON keys preserve the actual
+    model vocabulary without lossy decoding or lowercasing.
+    """
+    if name == "word":
+        return default_tokenize, {"kind": "word", "version": 1}
+
+    import hashlib
+
+    try:
+        from transformers import AutoTokenizer
+    except ImportError as exc:
+        raise ValueError("model tokenization requires the optional transformers package") from exc
+    tokenizer = AutoTokenizer.from_pretrained(name, revision=revision, trust_remote_code=False)
+    if not tokenizer.is_fast:
+        raise ValueError("model tokenization requires a fast tokenizer for fingerprinting")
+    fingerprint = hashlib.sha256(tokenizer.backend_tokenizer.to_str().encode()).hexdigest()
+
+    def encode(text):
+        return [str(token) for token in tokenizer.encode(text, add_special_tokens=False)]
+
+    return encode, {
+        "kind": "huggingface",
+        "name": name,
+        "revision": revision,
+        "sha256": fingerprint,
+    }
