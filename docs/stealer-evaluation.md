@@ -27,7 +27,8 @@ all generation runs locally, without a model API or API key. The pinned model
 revision, library versions, hardware, settings, source hashes and elapsed time
 are recorded. Exact outputs can vary across hardware/library versions. The
 output directory must be new, so a rerun cannot silently mix or overwrite data.
-A failed generation leaves partial data for inspection; it does not resume.
+Completed batches are saved atomically and can be resumed after interruption.
+See the longer-run workflow below.
 
 The bundled 256 prompts combine 16 topics with 16 tasks. A seeded shuffle assigns
 unique prompt strings to disjoint training, calibration, and evaluation sets.
@@ -129,3 +130,77 @@ a production rewrite integration.
 - [ETH SRI: Probing SynthID-Text](https://www.sri.inf.ethz.ch/blog/probingsynthid)
 - [Google: SynthID Text documentation](https://ai.google.dev/responsible/docs/safeguards/synthid)
 - [Transformers SynthID implementation, v4.57.6](https://github.com/huggingface/transformers/blob/v4.57.6/src/transformers/generation/logits_process.py)
+
+
+## Longer runs and DGX Spark
+
+`--resume` continues the same protocol and prompt split. Repeat the original
+arguments with that flag; changing the model, runtime, dtype, device, source
+files, batch size, budgets, or split is rejected. Each completed batch/arm is a
+checksummed JSON shard. A process lock prevents simultaneous writers and is
+released by the OS when a process exits or is killed. A partial temporary write
+is ignored; a damaged committed shard raises an error. Existing complete runs
+are verified by corpus hash and can be rescored without loading the model.
+
+```sh
+# Prepare pinned, attributed instructions (no reference answers are retained).
+python stealer/prepare_dolly.py --out work/dolly
+
+# Collect a larger corpus, without starting statistical analysis yet.
+python stealer/evaluate.py \
+  --model HuggingFaceTB/SmolLM2-135M-Instruct \
+  --revision 12fd25f77366fa6b3b4b768ec3050bf629380bac \
+  --device cuda --dtype float32 --prompts work/dolly/prompts.jsonl \
+  --train 1024 --calibration 256 --evaluation 256 --budgets 64,256,1024 \
+  --context-len 4 --min-matches 5 --target-fpr 0.05 \
+  --max-new-tokens 128 --batch-size 32 --seed 20260906 \
+  --out work/dolly-scale --collect-only
+
+# After interruption: repeat that exact collection command with --resume.
+# After completion: score on any machine with the stdlib-only core.
+python stealer/evaluate.py --score-only --out work/dolly-scale
+```
+
+The preparer retains context-free instructions in `open_qa`, `general_qa`,
+`brainstorming`, and `creative_writing`, requires 40-1000 characters, and removes
+NFKC/case/whitespace-normalized duplicates. It does not truncate instructions or
+use their human answers. Semantic overlap remains possible. The resulting
+prompt data retain Dolly's CC BY-SA 3.0 license and include attribution,
+filtering counts, dataset revision, and source/output hashes. If needed,
+`--source-file` accepts an offline copy only if its hash matches the pinned data.
+
+This larger protocol changes the corpus and hardware relative to the initial
+pilot. Compare its nested budgets *within this run* to isolate data volume;
+do not attribute cross-run differences solely to more data. The initial scale
+study still uses a small model and one seed, not a production watermark.
+
+On Spark, use a CUDA-enabled ARM64/GB10 PyTorch runtime. Do not replace the
+platform PyTorch with the workstation's wheel. In a GPU-enabled container,
+create a project-local venv with `--system-site-packages` to inherit working
+PyTorch, then install only `transformers==4.57.6` and `pytest==9.1.1` into it.
+The inherited container's unrelated vLLM packages may have incompatible
+Transformers requirements; they are not part of this research process. The
+base container remains unchanged. Run the focused tests inside that environment
+before collection:
+
+```sh
+python -m pytest tests/test_stealer.py tests/test_stealer_evaluation.py \
+  tests/test_stealer_checkpoints.py -o addopts= -q
+```
+
+Generation metadata records the actual Torch/CUDA versions, tokenizer and
+sampling-table hashes, dtype, device, dependency versions, and source hashes.
+`manifest.json` freezes the protocol and split, `runtime.json` freezes the
+runtime, and `generation.json` marks a complete corpus. `--score-only` accepts
+only `--out` and uses the saved protocol; it cannot silently retune thresholds
+on the held-out set. Analysis source hashes are recorded separately.
+
+When mapping a numeric host UID into a container without a matching passwd
+entry, set writable cache paths explicitly, for example
+`TORCHINDUCTOR_CACHE_DIR=/workspace/work/torch-cache` and
+`TRITON_CACHE_DIR=/workspace/work/triton-cache`. Otherwise PyTorch compilation
+imports can fail while looking up the username, before model loading begins.
+Set `HF_HOME=/workspace/work/hf-cache` for the model cache as well. Keep these
+paths under the mounted experiment checkout. A detached container can run the
+collection command followed by `--score-only`; restart it with `--resume` to
+reuse completed batches. Keep its image ID and launch command with the results.

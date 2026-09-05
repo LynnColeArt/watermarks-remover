@@ -1,0 +1,447 @@
+{
+  "config": {
+    "model": "HuggingFaceTB/SmolLM2-135M-Instruct",
+    "revision": "12fd25f77366fa6b3b4b768ec3050bf629380bac",
+    "device": "cuda",
+    "dtype": "float32",
+    "resume": false,
+    "collect_only": false,
+    "score_only": true,
+    "train": 1024,
+    "calibration": 256,
+    "evaluation": 256,
+    "budgets": "64,256,1024",
+    "context_len": 4,
+    "min_matches": 5,
+    "target_fpr": 0.05,
+    "max_new_tokens": 128,
+    "batch_size": 32,
+    "seed": 20260906,
+    "prompts": "work/dolly/prompts.jsonl",
+    "out": "work/dolly-scale"
+  },
+  "metadata": {
+    "model": "HuggingFaceTB/SmolLM2-135M-Instruct",
+    "resolved_model_revision": "12fd25f77366fa6b3b4b768ec3050bf629380bac",
+    "tokenizer_sha256": "2225e8fb36485529d3c826106f8bec359b719a6bcc3f5d6314a834c7be153905",
+    "tokenizer_kind": "model token IDs, no decode/re-encode in estimator",
+    "watermark": {
+      "ngram_len": 5,
+      "keys": [
+        654,
+        400,
+        836,
+        123,
+        340,
+        443,
+        597,
+        160,
+        57
+      ],
+      "sampling_table_size": 65536,
+      "sampling_table_seed": 0,
+      "context_history_size": 1024,
+      "skip_first_ngram_calls": true,
+      "debug_mode": false
+    },
+    "sampling_table_sha256": "cb6af87dfb8414177e71cbc9c2790a771a8018ce1925916b160ab1b8f327dbad",
+    "torch": "2.11.0+cu130",
+    "transformers": "4.57.6",
+    "python": "3.12.13",
+    "device": "cuda",
+    "gpu": "NVIDIA GB10",
+    "dependencies": {
+      "numpy": "2.2.6",
+      "tokenizers": "0.22.2",
+      "huggingface_hub": "0.36.2",
+      "safetensors": "0.8.0"
+    },
+    "cuda_runtime": "13.0",
+    "dtype": "torch.float32",
+    "generation_seconds_this_session": 562.7514453020412,
+    "source_sha256": {
+      "tokens.py": "6b3b560681c9eaa4afa0fa1c28839432734a608714a2e7587f9d26ef653a6017",
+      "download_prompts.py": "4946f5f27db0660f3fd4dbd48da8679beef0deb29e409b819fbc7663ffe31a07",
+      "steal.py": "f9f2150c19b4f6b0e3c010fd7f39974930c24c8e984baba9b156515be21bddbc",
+      "prepare_dolly.py": "0667fc7e12e7fe4d1a21ffe9b841779cc3d7571ede5381dff5b13d5c07fa3e40",
+      "checkpoints.py": "726acb1e01d02d80e61fa4ed4d9ced371644c12d074c66bcb324a4c4d4081b1b",
+      "__init__.py": "7b0658a1f4198f2d058662b17d111cab3ddaf41cfe705a443b54c27dc92f0dd2",
+      "scorer.py": "aca36c3ba97e811c26252addd0daaaa860eb3cd46402671cd5c13c453c8f92f6",
+      "evaluate.py": "cd11447aca40eabcb1332a23b5b43521f336142ac682d0b20b8f250e33727fb6"
+    },
+    "git_commit": "66a613b9438985aca0fe88d81381904edc50629e",
+    "working_tree_dirty": false,
+    "analysis_source_sha256": {
+      "tokens.py": "6b3b560681c9eaa4afa0fa1c28839432734a608714a2e7587f9d26ef653a6017",
+      "download_prompts.py": "4946f5f27db0660f3fd4dbd48da8679beef0deb29e409b819fbc7663ffe31a07",
+      "steal.py": "f9f2150c19b4f6b0e3c010fd7f39974930c24c8e984baba9b156515be21bddbc",
+      "prepare_dolly.py": "0667fc7e12e7fe4d1a21ffe9b841779cc3d7571ede5381dff5b13d5c07fa3e40",
+      "checkpoints.py": "726acb1e01d02d80e61fa4ed4d9ced371644c12d074c66bcb324a4c4d4081b1b",
+      "__init__.py": "7b0658a1f4198f2d058662b17d111cab3ddaf41cfe705a443b54c27dc92f0dd2",
+      "scorer.py": "aca36c3ba97e811c26252addd0daaaa860eb3cd46402671cd5c13c453c8f92f6",
+      "evaluate.py": "cd11447aca40eabcb1332a23b5b43521f336142ac682d0b20b8f250e33727fb6"
+    },
+    "analysis_seconds": 2.85687872802373,
+    "corpus_sha256": "c5e5e8baed07044b54ac488516b42b2fe647bfeaf42d8be7050a267cdb2343cd"
+  },
+  "command": "python stealer/evaluate.py --model HuggingFaceTB/SmolLM2-135M-Instruct --revision 12fd25f77366fa6b3b4b768ec3050bf629380bac --device cuda --dtype float32 --train 1024 --calibration 256 --evaluation 256 --budgets 64,256,1024 --context-len 4 --min-matches 5 --target-fpr 0.05 --max-new-tokens 128 --batch-size 32 --seed 20260906 --prompts work/dolly/prompts.jsonl --out work/dolly-scale",
+  "prompt_split_sha256": "af9884ba5a9c6ea13735ea92755f137997ecb7bbe407fe40d02a275a86ffdd25",
+  "reference": {
+    "name": "keyed mean-g detector, repetition-masked, empirical calibration",
+    "calibration": {
+      "status": "calibrated",
+      "threshold": 0.5215053909848775,
+      "n": 255
+    },
+    "arms": {
+      "watermarked": {
+        "documents": 256,
+        "decisions": 255,
+        "abstentions": 1,
+        "positive": 253,
+        "positive_rate_among_decisions": 0.9921568627450981,
+        "positive_rate_95ci": [
+          0.9718590659672623,
+          0.9978464871677704
+        ],
+        "detected_fraction_all_documents": 0.98828125
+      },
+      "baseline": {
+        "documents": 256,
+        "decisions": 255,
+        "abstentions": 1,
+        "positive": 23,
+        "positive_rate_among_decisions": 0.09019607843137255,
+        "positive_rate_95ci": [
+          0.06085409654729805,
+          0.13170183729643958
+        ],
+        "detected_fraction_all_documents": 0.08984375
+      },
+      "control": {
+        "documents": 256,
+        "decisions": 256,
+        "abstentions": 0,
+        "positive": 29,
+        "positive_rate_among_decisions": 0.11328125,
+        "positive_rate_95ci": [
+          0.0800407222974869,
+          0.15795616665689804
+        ],
+        "detected_fraction_all_documents": 0.11328125
+      }
+    },
+    "auroc": 0.9978777393310265,
+    "sanity_check": "passed",
+    "sanity_rule": "held-out reference AUROC >= 0.8 and sensitivity >= 0.5"
+  },
+  "estimators": [
+    {
+      "budget": 64,
+      "training_arm": "watermarked",
+      "contexts": 6680,
+      "calibration": {
+        "status": "insufficient_calibration",
+        "threshold": null,
+        "n": 12
+      },
+      "arms": {
+        "watermarked": {
+          "documents": 256,
+          "decisions": 0,
+          "abstentions": 256,
+          "positive": 0,
+          "positive_rate_among_decisions": null,
+          "positive_rate_95ci": null,
+          "detected_fraction_all_documents": null,
+          "pair_coverage": 0.012757158378018435
+        },
+        "baseline": {
+          "documents": 256,
+          "decisions": 0,
+          "abstentions": 256,
+          "positive": 0,
+          "positive_rate_among_decisions": null,
+          "positive_rate_95ci": null,
+          "detected_fraction_all_documents": null,
+          "pair_coverage": 0.00826118326118326
+        },
+        "control": {
+          "documents": 256,
+          "decisions": 0,
+          "abstentions": 256,
+          "positive": 0,
+          "positive_rate_among_decisions": null,
+          "positive_rate_95ci": null,
+          "detected_fraction_all_documents": null,
+          "pair_coverage": 0.007987276904046652
+        }
+      },
+      "scorable_auroc": 0.61,
+      "heldout_unique_matched_pairs": 213,
+      "heldout_spearman_s_vs_g": 0.13506005801603788
+    },
+    {
+      "budget": 64,
+      "training_arm": "control",
+      "contexts": 6788,
+      "calibration": {
+        "status": "insufficient_calibration",
+        "threshold": null,
+        "n": 12
+      },
+      "arms": {
+        "watermarked": {
+          "documents": 256,
+          "decisions": 0,
+          "abstentions": 256,
+          "positive": 0,
+          "positive_rate_among_decisions": null,
+          "positive_rate_95ci": null,
+          "detected_fraction_all_documents": null,
+          "pair_coverage": 0.011775838502786247
+        },
+        "baseline": {
+          "documents": 256,
+          "decisions": 0,
+          "abstentions": 256,
+          "positive": 0,
+          "positive_rate_among_decisions": null,
+          "positive_rate_95ci": null,
+          "detected_fraction_all_documents": null,
+          "pair_coverage": 0.008044733044733045
+        },
+        "control": {
+          "documents": 256,
+          "decisions": 0,
+          "abstentions": 256,
+          "positive": 0,
+          "positive_rate_among_decisions": null,
+          "positive_rate_95ci": null,
+          "detected_fraction_all_documents": null,
+          "pair_coverage": 0.010461212228308888
+        }
+      },
+      "scorable_auroc": 0.375,
+      "heldout_unique_matched_pairs": 219,
+      "heldout_spearman_s_vs_g": 0.04274109520483257
+    },
+    {
+      "budget": 256,
+      "training_arm": "watermarked",
+      "contexts": 26097,
+      "calibration": {
+        "status": "calibrated",
+        "threshold": 0.71484,
+        "n": 43
+      },
+      "arms": {
+        "watermarked": {
+          "documents": 256,
+          "decisions": 65,
+          "abstentions": 191,
+          "positive": 7,
+          "positive_rate_among_decisions": 0.1076923076923077,
+          "positive_rate_95ci": [
+            0.053154219531127755,
+            0.20601313581449843
+          ],
+          "detected_fraction_all_documents": 0.02734375,
+          "pair_coverage": 0.026951249430484003
+        },
+        "baseline": {
+          "documents": 256,
+          "decisions": 28,
+          "abstentions": 228,
+          "positive": 5,
+          "positive_rate_among_decisions": 0.17857142857142858,
+          "positive_rate_95ci": [
+            0.07878501945604277,
+            0.35591424789342946
+          ],
+          "detected_fraction_all_documents": 0.01953125,
+          "pair_coverage": 0.01735209235209235
+        },
+        "control": {
+          "documents": 256,
+          "decisions": 40,
+          "abstentions": 216,
+          "positive": 5,
+          "positive_rate_among_decisions": 0.125,
+          "positive_rate_95ci": [
+            0.05459500250945401,
+            0.261121198388511
+          ],
+          "detected_fraction_all_documents": 0.01953125,
+          "pair_coverage": 0.018943276197207988
+        }
+      },
+      "scorable_auroc": 0.5615384615384615,
+      "heldout_unique_matched_pairs": 715,
+      "heldout_spearman_s_vs_g": 0.15528121364304698
+    },
+    {
+      "budget": 256,
+      "training_arm": "control",
+      "contexts": 25980,
+      "calibration": {
+        "status": "calibrated",
+        "threshold": 1.00364,
+        "n": 52
+      },
+      "arms": {
+        "watermarked": {
+          "documents": 256,
+          "decisions": 54,
+          "abstentions": 202,
+          "positive": 1,
+          "positive_rate_among_decisions": 0.018518518518518517,
+          "positive_rate_95ci": [
+            0.003276487718229061,
+            0.09771437488781931
+          ],
+          "detected_fraction_all_documents": 0.00390625,
+          "pair_coverage": 0.02253530999193916
+        },
+        "baseline": {
+          "documents": 256,
+          "decisions": 27,
+          "abstentions": 229,
+          "positive": 4,
+          "positive_rate_among_decisions": 0.14814814814814814,
+          "positive_rate_95ci": [
+            0.05915927776244326,
+            0.3247868542781298
+          ],
+          "detected_fraction_all_documents": 0.015625,
+          "pair_coverage": 0.01699134199134199
+        },
+        "control": {
+          "documents": 256,
+          "decisions": 42,
+          "abstentions": 214,
+          "positive": 1,
+          "positive_rate_among_decisions": 0.023809523809523808,
+          "positive_rate_95ci": [
+            0.004215404134432499,
+            0.12321201573766646
+          ],
+          "detected_fraction_all_documents": 0.00390625,
+          "pair_coverage": 0.021205159922247748
+        }
+      },
+      "scorable_auroc": 0.44170096021947874,
+      "heldout_unique_matched_pairs": 652,
+      "heldout_spearman_s_vs_g": -0.01620200719924768
+    },
+    {
+      "budget": 1024,
+      "training_arm": "watermarked",
+      "contexts": 100143,
+      "calibration": {
+        "status": "calibrated",
+        "threshold": 0.74845,
+        "n": 95
+      },
+      "arms": {
+        "watermarked": {
+          "documents": 256,
+          "decisions": 117,
+          "abstentions": 139,
+          "positive": 14,
+          "positive_rate_among_decisions": 0.11965811965811966,
+          "positive_rate_95ci": [
+            0.07263149376675573,
+            0.19086630848951155
+          ],
+          "detected_fraction_all_documents": 0.0546875,
+          "pair_coverage": 0.046192128412715104
+        },
+        "baseline": {
+          "documents": 256,
+          "decisions": 72,
+          "abstentions": 184,
+          "positive": 1,
+          "positive_rate_among_decisions": 0.013888888888888888,
+          "positive_rate_95ci": [
+            0.002455951882905767,
+            0.07456602147476155
+          ],
+          "detected_fraction_all_documents": 0.00390625,
+          "pair_coverage": 0.03185425685425686
+        },
+        "control": {
+          "documents": 256,
+          "decisions": 90,
+          "abstentions": 166,
+          "positive": 3,
+          "positive_rate_among_decisions": 0.03333333333333333,
+          "positive_rate_95ci": [
+            0.011400390222806277,
+            0.09347286030389873
+          ],
+          "detected_fraction_all_documents": 0.01171875,
+          "pair_coverage": 0.03594274606820993
+        }
+      },
+      "scorable_auroc": 0.5871320037986705,
+      "heldout_unique_matched_pairs": 1848,
+      "heldout_spearman_s_vs_g": 0.18975658030270398
+    },
+    {
+      "budget": 1024,
+      "training_arm": "control",
+      "contexts": 100295,
+      "calibration": {
+        "status": "calibrated",
+        "threshold": 0.73776,
+        "n": 104
+      },
+      "arms": {
+        "watermarked": {
+          "documents": 256,
+          "decisions": 105,
+          "abstentions": 151,
+          "positive": 4,
+          "positive_rate_among_decisions": 0.0380952380952381,
+          "positive_rate_95ci": [
+            0.014912459331107637,
+            0.09388302126054626
+          ],
+          "detected_fraction_all_documents": 0.015625,
+          "pair_coverage": 0.03816633371885186
+        },
+        "baseline": {
+          "documents": 256,
+          "decisions": 79,
+          "abstentions": 177,
+          "positive": 7,
+          "positive_rate_among_decisions": 0.08860759493670886,
+          "positive_rate_95ci": [
+            0.04358529598731306,
+            0.17178342246211697
+          ],
+          "detected_fraction_all_documents": 0.02734375,
+          "pair_coverage": 0.03228715728715729
+        },
+        "control": {
+          "documents": 256,
+          "decisions": 93,
+          "abstentions": 163,
+          "positive": 4,
+          "positive_rate_among_decisions": 0.043010752688172046,
+          "positive_rate_95ci": [
+            0.016851153993758472,
+            0.10542559570513925
+          ],
+          "detected_fraction_all_documents": 0.015625,
+          "pair_coverage": 0.0400424103198445
+        }
+      },
+      "scorable_auroc": 0.4540084388185654,
+      "heldout_unique_matched_pairs": 1724,
+      "heldout_spearman_s_vs_g": 0.009318854963116763
+    }
+  ],
+  "artifact_scope": "Aggregate summary; full per-document scores and generated corpus are in the run artifacts. Reproduce with the recorded protocol and pinned sources."
+}

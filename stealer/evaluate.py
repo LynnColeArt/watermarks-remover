@@ -12,15 +12,18 @@ import argparse
 import hashlib
 import json
 import math
+import os
 import platform
 import random
 import statistics
 import subprocess
 import sys
 import time
+from itertools import islice
 from pathlib import Path
 
 import scorer
+from checkpoints import Checkpoints, atomic_json, file_digest, writer_lock
 from tokens import count_ngrams
 
 # Public experimental keys, never a production watermark configuration.
@@ -161,8 +164,9 @@ def fit(rows, arm, context_len, budget):
     training = [row for row in rows if row["split"] == "train"]
 
     def counts(which):
-        sequences = [[str(t) for t in row["token_ids"]] for row in training if row["arm"] == which]
-        return count_ngrams(sequences[:budget], context_len, lambda sequence: sequence)
+        selected = islice((row for row in training if row["arm"] == which), budget)
+        sequences = ([str(t) for t in row["token_ids"]] for row in selected)
+        return count_ngrams(sequences, context_len, lambda sequence: sequence)
 
     return scorer.build_scorer(counts(arm), counts("baseline"), context_len)
 
@@ -275,7 +279,7 @@ def keyed_scores(sequence, reference, context_len):
     return gs, statistics.mean(valid) if valid else None
 
 
-def generate(args, splits, out):
+def generate(args, splits, out, checkpoint=None):
     import torch
     import transformers
     from transformers import AutoModelForCausalLM, AutoTokenizer, SynthIDTextWatermarkingConfig
@@ -293,7 +297,7 @@ def generate(args, splits, out):
             args.model,
             revision=args.revision,
             trust_remote_code=False,
-            torch_dtype=torch.float32,
+            torch_dtype=getattr(torch, getattr(args, "dtype", "float32")),
             use_safetensors=True,
         )
         .to(args.device)
@@ -303,8 +307,32 @@ def generate(args, splits, out):
         ngram_len=args.context_len + 1, keys=KEYS, skip_first_ngram_calls=True
     )
     reference = make_reference(wm_config, model.config.vocab_size, args.device)
+    runtime = {
+        "model": args.model,
+        "resolved_model_revision": model.config._commit_hash,
+        "tokenizer_sha256": fingerprint,
+        "tokenizer_kind": "model token IDs, no decode/re-encode in estimator",
+        "watermark": wm_config.to_dict(),
+        "sampling_table_sha256": hashlib.sha256(
+            reference.sampling_table.cpu().numpy().tobytes()
+        ).hexdigest(),
+        "torch": torch.__version__,
+        "transformers": transformers.__version__,
+        "python": platform.python_version(),
+        "device": args.device,
+        "gpu": torch.cuda.get_device_name() if args.device.startswith("cuda") else None,
+    }
+    from importlib.metadata import version
+
+    runtime["dependencies"] = {
+        name: version(name) for name in ("numpy", "tokenizers", "huggingface_hub", "safetensors")
+    }
+    runtime["cuda_runtime"] = torch.version.cuda
+    runtime["dtype"] = str(model.dtype)
+    if checkpoint:
+        checkpoint.bind_runtime(runtime)
     rows = []
-    with (out / "corpus.jsonl").open("w", encoding="utf-8") as fh:
+    with (out / ".corpus.jsonl.tmp").open("w", encoding="utf-8") as fh:
         for split_index, (split, prompts) in enumerate(splits.items()):
             for start in range(0, len(prompts), args.batch_size):
                 batch = prompts[start : start + args.batch_size]
@@ -320,6 +348,12 @@ def generate(args, splits, out):
                 for arm_index, arm in enumerate(("watermarked", "baseline", "control")):
                     # Independent streams; all three arms use identical generation settings.
                     seed = args.seed + split_index * 100000 + start * 3 + arm_index
+                    cached = checkpoint.load(split, start, arm, batch, seed) if checkpoint else None
+                    if cached is not None:
+                        rows.extend(cached)
+                        for row in cached:
+                            fh.write(json.dumps(row, ensure_ascii=False) + "\n")
+                        continue
                     transformers.set_seed(seed)
                     with torch.inference_mode():
                         output = model.generate(
@@ -332,6 +366,7 @@ def generate(args, splits, out):
                             pad_token_id=tokenizer.pad_token_id,
                             watermarking_config=wm_config if arm == "watermarked" else None,
                         )
+                    batch_rows = []
                     for offset, generated_ids in enumerate(
                         output[:, inputs.input_ids.shape[1] :].tolist()
                     ):
@@ -350,28 +385,19 @@ def generate(args, splits, out):
                             "g_values": gs,
                             "reference_score": reference_score,
                         }
-                        rows.append(row)
+                        batch_rows.append(row)
+                    if checkpoint:
+                        checkpoint.save(batch_rows, split, start, arm, batch, seed)
+                    rows.extend(batch_rows)
+                    for row in batch_rows:
                         fh.write(json.dumps(row, ensure_ascii=False) + "\n")
                     fh.flush()
                 print(
                     f"{split}: {min(start + args.batch_size, len(prompts))}/{len(prompts)} prompts, three arms",
                     flush=True,
                 )
-    return rows, {
-        "model": args.model,
-        "resolved_model_revision": model.config._commit_hash,
-        "tokenizer_sha256": fingerprint,
-        "tokenizer_kind": "model token IDs, no decode/re-encode in estimator",
-        "watermark": wm_config.to_dict(),
-        "sampling_table_sha256": hashlib.sha256(
-            reference.sampling_table.cpu().numpy().tobytes()
-        ).hexdigest(),
-        "torch": torch.__version__,
-        "transformers": transformers.__version__,
-        "python": platform.python_version(),
-        "device": args.device,
-        "gpu": torch.cuda.get_device_name() if args.device.startswith("cuda") else None,
-    }
+    os.replace(out / ".corpus.jsonl.tmp", out / "corpus.jsonl")
+    return rows, runtime
 
 
 def report(result):
@@ -413,9 +439,14 @@ def report(result):
         "The control-trained estimator sees two independent unwatermarked samples from the same model. "
         "Any apparent watermark discrimination there is a negative-control result, not watermark recovery.",
         "",
-        "The corpus uses disjoint prompts drawn from shared templates and topics. This is a small engineering pilot, "
-        "not a representative language benchmark. Generation seeds are independent across arms. "
-        "Training budgets are nested and must not be selected using evaluation results.",
+        (
+            "The corpus uses disjoint prompts from an external corpus. Check its provenance and deduplication policy; "
+            "disjoint strings do not guarantee disjoint topics or meanings. "
+            if result["config"].get("prompts")
+            else "The corpus uses disjoint prompts drawn from shared templates and topics. This is an engineering pilot, "
+            "not a representative language benchmark. "
+        )
+        + "Generation seeds are independent across arms. Training budgets are nested and must not be selected using evaluation results.",
         "",
         "The keyed reference uses the actual generation keys and the Transformers g-function, "
         "with repeated contexts masked. It is a mean-g detector calibrated on separate unwatermarked outputs, "
@@ -446,6 +477,16 @@ def main(argv=None):
     p.add_argument("--model", default="HuggingFaceTB/SmolLM2-135M-Instruct")
     p.add_argument("--revision", default="main")
     p.add_argument("--device", default="cpu")
+    p.add_argument("--dtype", choices=["float32", "bfloat16"], default="float32")
+    p.add_argument("--resume", action="store_true", help="resume identical planned batches")
+    p.add_argument(
+        "--collect-only", action="store_true", help="generate/checkpoint without fitting"
+    )
+    p.add_argument(
+        "--score-only",
+        action="store_true",
+        help="score a complete saved run without ML dependencies",
+    )
     p.add_argument("--train", type=int, default=64)
     p.add_argument("--calibration", type=int, default=32)
     p.add_argument("--evaluation", type=int, default=32)
@@ -463,6 +504,16 @@ def main(argv=None):
         "--out", type=Path, required=True, help="new output directory; existing paths rejected"
     )
     args = p.parse_args(argv)
+    if args.score_only:
+        supplied = sys.argv[1:] if argv is None else argv
+        if any(
+            x.startswith("--") and x.split("=")[0] not in ("--score-only", "--out")
+            for x in supplied
+        ):
+            p.error("--score-only uses the saved protocol; supply only --score-only and --out")
+        manifest = json.loads((args.out / "manifest.json").read_text(encoding="utf-8"))
+        for key, value in manifest["config"].items():
+            setattr(args, key, Path(value) if key == "prompts" and value else value)
     budgets = sorted(set(int(x) for x in args.budgets.split(",")))
     if not budgets or min(budgets) < 1 or max(budgets) > args.train:
         p.error("budgets must be positive and no greater than --train")
@@ -473,15 +524,73 @@ def main(argv=None):
         p.error("positive context/match/batch sizes and a longer generation are required")
     if not 0 < args.target_fpr < 1:
         p.error("target FPR must be between zero and one")
-    prompts = (
-        [json.loads(line)["text"] for line in args.prompts.read_text().splitlines() if line.strip()]
-        if args.prompts
-        else [task.format(topic=topic) for task in TASKS for topic in TOPICS]
-    )
-    splits = split_prompts(prompts, args.train, args.calibration, args.evaluation, args.seed)
-    args.out.mkdir(parents=True, exist_ok=False)
+    if args.score_only:
+        splits = manifest["splits"]
+    else:
+        prompts = (
+            [
+                json.loads(line)["text"]
+                for line in args.prompts.read_text(encoding="utf-8").splitlines()
+                if line.strip()
+            ]
+            if args.prompts
+            else [task.format(topic=topic) for task in TASKS for topic in TOPICS]
+        )
+        splits = split_prompts(prompts, args.train, args.calibration, args.evaluation, args.seed)
+        config = {
+            k: str(v) if isinstance(v, Path) else v
+            for k, v in vars(args).items()
+            if k not in ("out", "resume", "collect_only", "score_only")
+        }
+        manifest = {
+            "schema": 1,
+            "config": config,
+            "splits": splits,
+            "source_sha256": source_hashes(),
+        }
+    if args.resume or args.score_only:
+        if not args.out.is_dir():
+            p.error("resume/scoring requires an existing experiment directory")
+    else:
+        args.out.mkdir(parents=True, exist_ok=False)
+    with writer_lock(args.out):
+        checkpoint = Checkpoints(args.out, manifest, resume=args.resume or args.score_only)
+        start = time.monotonic()
+        completed = checkpoint.completed()
+        if completed:
+            rows, metadata = completed
+        elif args.score_only:
+            p.error("generation is incomplete; resume collection before scoring")
+        else:
+            rows, metadata = generate(args, splits, args.out, checkpoint=checkpoint)
+            metadata["generation_seconds_this_session"] = time.monotonic() - start
+            metadata["source_sha256"] = manifest["source_sha256"]
+            metadata["git_commit"] = subprocess.check_output(
+                ["git", "rev-parse", "HEAD"],  # noqa: S607
+                cwd=Path(__file__).parent,
+                text=True,
+            ).strip()
+            metadata["working_tree_dirty"] = bool(
+                subprocess.check_output(
+                    ["git", "status", "--porcelain"],  # noqa: S607
+                    cwd=Path(__file__).parent,
+                    text=True,
+                ).strip()
+            )
+            checkpoint.finish(rows, metadata)
+        if args.collect_only:
+            print(f"collection complete: {len(rows)} responses in {args.out}", flush=True)
+            return 0
+        return write_results(args, splits, budgets, rows, metadata, argv)
+
+
+def source_hashes():
+    return {path.name: file_digest(path) for path in Path(__file__).parent.glob("*.py")}
+
+
+def write_results(args, splits, budgets, rows, metadata, argv=None):
+    metadata = dict(metadata)
     start = time.monotonic()
-    rows, metadata = generate(args, splits, args.out)
     estimators = []
     for budget in budgets:
         for arm in ("watermarked", "control"):
@@ -497,29 +606,20 @@ def main(argv=None):
                     **evaluated,
                 }
             )
-    metadata["source_sha256"] = {
-        path.name: hashlib.sha256(path.read_bytes()).hexdigest()
-        for path in Path(__file__).parent.glob("*.py")
-    }
-    metadata["elapsed_seconds"] = time.monotonic() - start
-    metadata["corpus_sha256"] = hashlib.sha256((args.out / "corpus.jsonl").read_bytes()).hexdigest()
-    metadata["git_commit"] = subprocess.check_output(
-        ["git", "rev-parse", "HEAD"],  # noqa: S607
-        cwd=Path(__file__).parent,
-        text=True,
-    ).strip()
-    metadata["working_tree_dirty"] = bool(
-        subprocess.check_output(
-            ["git", "status", "--porcelain"],  # noqa: S607
-            cwd=Path(__file__).parent,
-            text=True,
-        ).strip()
-    )
+    metadata["analysis_source_sha256"] = source_hashes()
+    metadata["analysis_seconds"] = time.monotonic() - start
+    metadata["corpus_sha256"] = file_digest(args.out / "corpus.jsonl")
     import shlex
 
-    command = shlex.join(
-        ["python", "stealer/evaluate.py", *(sys.argv[1:] if argv is None else argv)]
-    )
+    generation_args = ["python", "stealer/evaluate.py"]
+    for key, value in vars(args).items():
+        if key in ("resume", "collect_only", "score_only") or value is None:
+            continue
+        recorded_value = (
+            (metadata.get("resolved_model_revision") or value) if key == "revision" else value
+        )
+        generation_args.extend(["--" + key.replace("_", "-"), str(recorded_value)])
+    command = shlex.join(generation_args)
     result = {
         "config": {k: str(v) if isinstance(v, Path) else v for k, v in vars(args).items()},
         "metadata": metadata,
@@ -530,9 +630,7 @@ def main(argv=None):
         "reference": reference_results(rows, args.target_fpr),
         "estimators": estimators,
     }
-    (args.out / "results.json").write_text(
-        json.dumps(result, indent=2, allow_nan=False) + "\n", encoding="utf-8"
-    )
+    atomic_json(args.out / "results.json", result)
     (args.out / "report.md").write_text(report(result), encoding="utf-8")
     print(f"wrote {args.out / 'report.md'}", flush=True)
     return 0
