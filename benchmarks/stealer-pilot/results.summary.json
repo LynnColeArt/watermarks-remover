@@ -1,0 +1,296 @@
+{
+  "config": {
+    "model": "HuggingFaceTB/SmolLM2-135M-Instruct",
+    "revision": "12fd25f77366fa6b3b4b768ec3050bf629380bac",
+    "device": "cuda",
+    "train": 64,
+    "calibration": 32,
+    "evaluation": 32,
+    "budgets": "16,64",
+    "context_len": 4,
+    "min_matches": 5,
+    "target_fpr": 0.05,
+    "max_new_tokens": 128,
+    "batch_size": 8,
+    "seed": 20260905,
+    "prompts": null,
+    "out": "work/stealer-pilot"
+  },
+  "metadata": {
+    "model": "HuggingFaceTB/SmolLM2-135M-Instruct",
+    "resolved_model_revision": "12fd25f77366fa6b3b4b768ec3050bf629380bac",
+    "tokenizer_sha256": "2225e8fb36485529d3c826106f8bec359b719a6bcc3f5d6314a834c7be153905",
+    "tokenizer_kind": "model token IDs, no decode/re-encode in estimator",
+    "watermark": {
+      "ngram_len": 5,
+      "keys": [
+        654,
+        400,
+        836,
+        123,
+        340,
+        443,
+        597,
+        160,
+        57
+      ],
+      "sampling_table_size": 65536,
+      "sampling_table_seed": 0,
+      "context_history_size": 1024,
+      "skip_first_ngram_calls": true,
+      "debug_mode": false
+    },
+    "sampling_table_sha256": "cb6af87dfb8414177e71cbc9c2790a771a8018ce1925916b160ab1b8f327dbad",
+    "torch": "2.8.0+cu128",
+    "transformers": "4.57.6",
+    "python": "3.11.15",
+    "device": "cuda",
+    "gpu": "NVIDIA GeForce RTX 4070",
+    "source_sha256": {
+      "__init__.py": "7b0658a1f4198f2d058662b17d111cab3ddaf41cfe705a443b54c27dc92f0dd2",
+      "scorer.py": "aca36c3ba97e811c26252addd0daaaa860eb3cd46402671cd5c13c453c8f92f6",
+      "download_prompts.py": "4946f5f27db0660f3fd4dbd48da8679beef0deb29e409b819fbc7663ffe31a07",
+      "tokens.py": "6b3b560681c9eaa4afa0fa1c28839432734a608714a2e7587f9d26ef653a6017",
+      "steal.py": "f9f2150c19b4f6b0e3c010fd7f39974930c24c8e984baba9b156515be21bddbc",
+      "evaluate.py": "892d79852f04360209e9228a27c682779dfc8c3c44daba51e7a78c58f5d59f60"
+    },
+    "elapsed_seconds": 155.8178082659142,
+    "corpus_sha256": "740d0ccfb44ee7a959c2d95c21f8eb46542afd00a2068b18f73b8563dcbece97",
+    "git_commit": "79e11f64fd7011b6f945953f16c1c388e9b7bf10",
+    "working_tree_dirty": false
+  },
+  "command": "python stealer/evaluate.py --model HuggingFaceTB/SmolLM2-135M-Instruct --revision 12fd25f77366fa6b3b4b768ec3050bf629380bac --device cuda --train 64 --calibration 32 --evaluation 32 --budgets 16,64 --context-len 4 --min-matches 5 --target-fpr 0.05 --max-new-tokens 128 --batch-size 8 --seed 20260905 --out work/stealer-pilot",
+  "prompt_split_sha256": "4b50a57dedf609c99396c6f8cfbe32080d28359f16e5c52d83fb270e5350665a",
+  "reference": {
+    "name": "keyed mean-g detector, repetition-masked, empirical calibration",
+    "calibration": {
+      "status": "calibrated",
+      "threshold": 0.5259856779368655,
+      "n": 32
+    },
+    "arms": {
+      "watermarked": {
+        "documents": 32,
+        "decisions": 32,
+        "abstentions": 0,
+        "positive": 32,
+        "positive_rate_among_decisions": 1.0,
+        "positive_rate_95ci": [
+          0.8928208017449293,
+          1.0
+        ],
+        "detected_fraction_all_documents": 1.0
+      },
+      "baseline": {
+        "documents": 32,
+        "decisions": 32,
+        "abstentions": 0,
+        "positive": 1,
+        "positive_rate_among_decisions": 0.03125,
+        "positive_rate_95ci": [
+          0.005537860164003122,
+          0.15744263820012558
+        ],
+        "detected_fraction_all_documents": 0.03125
+      },
+      "control": {
+        "documents": 32,
+        "decisions": 32,
+        "abstentions": 0,
+        "positive": 0,
+        "positive_rate_among_decisions": 0.0,
+        "positive_rate_95ci": [
+          0.0,
+          0.1071791982550706
+        ],
+        "detected_fraction_all_documents": 0.0
+      }
+    },
+    "auroc": 0.98828125,
+    "sanity_check": "passed",
+    "sanity_rule": "held-out reference AUROC >= 0.8 and sensitivity >= 0.5"
+  },
+  "estimators": [
+    {
+      "budget": 16,
+      "training_arm": "watermarked",
+      "contexts": 1934,
+      "calibration": {
+        "status": "insufficient_calibration",
+        "threshold": null,
+        "n": 0
+      },
+      "arms": {
+        "watermarked": {
+          "documents": 32,
+          "decisions": 0,
+          "abstentions": 32,
+          "positive": 0,
+          "positive_rate_among_decisions": null,
+          "positive_rate_95ci": null,
+          "detected_fraction_all_documents": null,
+          "pair_coverage": 0.011051143664867643
+        },
+        "baseline": {
+          "documents": 32,
+          "decisions": 0,
+          "abstentions": 32,
+          "positive": 0,
+          "positive_rate_among_decisions": null,
+          "positive_rate_95ci": null,
+          "detected_fraction_all_documents": null,
+          "pair_coverage": 0.011590296495956873
+        },
+        "control": {
+          "documents": 32,
+          "decisions": 0,
+          "abstentions": 32,
+          "positive": 0,
+          "positive_rate_among_decisions": null,
+          "positive_rate_95ci": null,
+          "detected_fraction_all_documents": null,
+          "pair_coverage": 0.007660878447395302
+        }
+      },
+      "scorable_auroc": 0.5625,
+      "heldout_unique_matched_pairs": 47,
+      "heldout_spearman_s_vs_g": -0.0511914776785577
+    },
+    {
+      "budget": 16,
+      "training_arm": "control",
+      "contexts": 1912,
+      "calibration": {
+        "status": "insufficient_calibration",
+        "threshold": null,
+        "n": 0
+      },
+      "arms": {
+        "watermarked": {
+          "documents": 32,
+          "decisions": 0,
+          "abstentions": 32,
+          "positive": 0,
+          "positive_rate_among_decisions": null,
+          "positive_rate_95ci": null,
+          "detected_fraction_all_documents": null,
+          "pair_coverage": 0.004112053456694937
+        },
+        "baseline": {
+          "documents": 32,
+          "decisions": 0,
+          "abstentions": 32,
+          "positive": 0,
+          "positive_rate_among_decisions": null,
+          "positive_rate_95ci": null,
+          "detected_fraction_all_documents": null,
+          "pair_coverage": 0.005660377358490566
+        },
+        "control": {
+          "documents": 32,
+          "decisions": 0,
+          "abstentions": 32,
+          "positive": 0,
+          "positive_rate_among_decisions": null,
+          "positive_rate_95ci": null,
+          "detected_fraction_all_documents": null,
+          "pair_coverage": 0.009959141981613892
+        }
+      },
+      "scorable_auroc": 0.0,
+      "heldout_unique_matched_pairs": 38,
+      "heldout_spearman_s_vs_g": 0.2567003023792072
+    },
+    {
+      "budget": 64,
+      "training_arm": "watermarked",
+      "contexts": 7589,
+      "calibration": {
+        "status": "insufficient_calibration",
+        "threshold": null,
+        "n": 1
+      },
+      "arms": {
+        "watermarked": {
+          "documents": 32,
+          "decisions": 0,
+          "abstentions": 32,
+          "positive": 0,
+          "positive_rate_among_decisions": null,
+          "positive_rate_95ci": null,
+          "detected_fraction_all_documents": null,
+          "pair_coverage": 0.024929324081213056
+        },
+        "baseline": {
+          "documents": 32,
+          "decisions": 0,
+          "abstentions": 32,
+          "positive": 0,
+          "positive_rate_among_decisions": null,
+          "positive_rate_95ci": null,
+          "detected_fraction_all_documents": null,
+          "pair_coverage": 0.01913746630727763
+        },
+        "control": {
+          "documents": 32,
+          "decisions": 0,
+          "abstentions": 32,
+          "positive": 0,
+          "positive_rate_among_decisions": null,
+          "positive_rate_95ci": null,
+          "detected_fraction_all_documents": null,
+          "pair_coverage": 0.01557711950970378
+        }
+      },
+      "scorable_auroc": 0.42857142857142855,
+      "heldout_unique_matched_pairs": 127,
+      "heldout_spearman_s_vs_g": 0.08324542359212207
+    },
+    {
+      "budget": 64,
+      "training_arm": "control",
+      "contexts": 7491,
+      "calibration": {
+        "status": "insufficient_calibration",
+        "threshold": null,
+        "n": 2
+      },
+      "arms": {
+        "watermarked": {
+          "documents": 32,
+          "decisions": 0,
+          "abstentions": 32,
+          "positive": 0,
+          "positive_rate_among_decisions": null,
+          "positive_rate_95ci": null,
+          "detected_fraction_all_documents": null,
+          "pair_coverage": 0.01644821382677975
+        },
+        "baseline": {
+          "documents": 32,
+          "decisions": 0,
+          "abstentions": 32,
+          "positive": 0,
+          "positive_rate_among_decisions": null,
+          "positive_rate_95ci": null,
+          "detected_fraction_all_documents": null,
+          "pair_coverage": 0.01778975741239892
+        },
+        "control": {
+          "documents": 32,
+          "decisions": 0,
+          "abstentions": 32,
+          "positive": 0,
+          "positive_rate_among_decisions": null,
+          "positive_rate_95ci": null,
+          "detected_fraction_all_documents": null,
+          "pair_coverage": 0.019662921348314606
+        }
+      },
+      "scorable_auroc": 0.34523809523809523,
+      "heldout_unique_matched_pairs": 114,
+      "heldout_spearman_s_vs_g": -0.013591433680037162
+    }
+  ],
+  "artifact_scope": "Summary only: per-document scores and generated corpus are omitted from this source-tree artifact. The raw corpus hash is retained; rerun the command to produce full artifacts."
+}
