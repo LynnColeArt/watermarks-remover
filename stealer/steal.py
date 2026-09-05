@@ -20,7 +20,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import scorer as scorer_mod
-from tokens import count_ngrams, default_tokenize
+from tokens import count_ngrams, load_tokenizer
 
 DRY_REPLY_HEAD = "This is a dry-run reply to the prompt: "
 
@@ -152,12 +152,16 @@ def cmd_build(args) -> int:
         raise SystemExit(f"no watermarked replies read from {args.replies}")
     print(f"building s* from {len(replies)} watermarked replies, {len(baseline)} baseline replies")
 
-    wm = count_ngrams(replies, args.ctx, default_tokenize)
-    base = count_ngrams(baseline, args.ctx, default_tokenize)
+    tokenize, tokenizer_config = load_tokenizer(
+        getattr(args, "tokenizer", "word"), getattr(args, "tokenizer_revision", None)
+    )
+    wm = count_ngrams(replies, args.ctx, tokenize)
+    base = count_ngrams(baseline, args.ctx, tokenize)
 
     built = scorer_mod.build_scorer(
         wm, base, args.ctx, topk=args.topk, alpha=args.alpha, min_context=args.min_context
     )
+    built["config"]["tokenizer"] = tokenizer_config
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(built, ensure_ascii=False), encoding="utf-8")
@@ -171,7 +175,17 @@ def cmd_detect(args) -> int:
     scorer = scorer_mod.load_scorer(Path(args.s_star))
     ctx = int(args.ctx) if args.ctx else int(scorer.get("config", {}).get("context_len") or 8)
     text = args.text if args.text is not None else Path(args.file).read_text(encoding="utf-8")
-    tokens = default_tokenize(text)
+    tokenizer_config = scorer.get("config", {}).get("tokenizer", {"kind": "word", "version": 1})
+    kind = tokenizer_config.get("kind")
+    if kind not in ("word", "huggingface"):
+        raise ValueError(f"unsupported tokenizer kind: {kind}")
+    name = tokenizer_config["name"] if kind == "huggingface" else "word"
+    tokenize, actual = load_tokenizer(name, tokenizer_config.get("revision"))
+    if actual != tokenizer_config:
+        raise ValueError(
+            "tokenizer identity differs from the saved scorer; rebuild or pin its revision"
+        )
+    tokens = tokenize(text)
     result = scorer_mod.score_sequence(scorer, tokens, ctx)
     result["tokens"] = len(tokens)
     print(json.dumps(result, ensure_ascii=False))
@@ -198,6 +212,8 @@ def main(argv=None) -> int:
     b = sub.add_parser("build", help="derive s* from replies and a baseline")
     b.add_argument("--replies", required=True, help="watermarked replies (JSONL)")
     b.add_argument("--baseline", required=True, help="non-watermarked baseline replies (JSONL)")
+    b.add_argument("--tokenizer", default="word", help="word or Hugging Face tokenizer name/path")
+    b.add_argument("--tokenizer-revision", default=None, help="pin the tokenizer commit")
     b.add_argument("--ctx", type=int, default=8, help="context length in tokens")
     b.add_argument("--topk", type=int, default=50, help="keep top-k tokens per context")
     b.add_argument("--alpha", type=float, default=0.4, help="add-alpha smoothing")
@@ -218,6 +234,9 @@ def main(argv=None) -> int:
         return 2
     try:
         return args.func(args)
+    except ValueError as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
     except urllib.error.HTTPError as exc:
         print(f"HTTP error {exc.code}: {exc.reason}", file=sys.stderr)
         return 1

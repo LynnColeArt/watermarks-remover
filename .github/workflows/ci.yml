@@ -72,10 +72,10 @@ jobs:
         run: python -m pip install -r requirements-dev.txt
 
       - name: Lint
-        run: python -m ruff check service tests
+        run: python -m ruff check service tests stealer
 
       - name: Format check
-        run: python -m ruff format --check service tests
+        run: python -m ruff format --check service tests stealer
 
   # Optional backends (CtrlRegen, MarkLLM, MarkDiffusion) are installed only by
   # their own setup_*.sh / Dockerfile.*, which CI never builds. A bad pin in one
