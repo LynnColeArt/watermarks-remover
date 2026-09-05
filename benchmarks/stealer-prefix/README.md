@@ -50,3 +50,58 @@ Source, protocol, device and runtime changes are rejected. Interruption within a
 seed recomputes that entire seed. Score-only needs only Python's standard library
 and records its analysis source hash. Raw experiment artifacts contain public
 synthetic prompts and generated local-model data; no private Claude logs are used.
+
+## Completed results
+
+The Spark job completed all three seeds in 95.2 seconds with exit code zero.
+Generation revision was `0d29a96`. Total sampled tokens: 36,864 for training plus
+4,608 for shared discovery. Source and artifact hashes were verified; stdlib-only
+rescoring reproduced every Spark metric exactly. Equal token budgets and unique
+anchor/novel contexts were also checked per seed.
+
+| Collection | Estimator | Anchor candidate coverage | Pooled matched-pair Spearman | Conditional sign accuracy |
+| --- | --- | ---: | ---: | ---: |
+| Ordinary | Original | 2.99% | 0.462 | 64.1% |
+| Ordinary | Uncertainty | 4.62% | 0.680 | 72.7% |
+| Repeated prefix | Original | 16.57% | 0.688 | 80.8% |
+| Repeated prefix | Uncertainty | 33.37% | 0.737 | 88.7% |
+
+Means are across three prompt/sampling seeds with one fixed model/key. Sign
+accuracy is conditional on matched candidates with absolute oracle log-ratio
+at least 0.2; rankings use each estimator's own matched subset. Repeated-prefix
+uncertainty coverage ranges from 29.79% to 36.62%, and sign accuracy from 87.43%
+to 89.49%. Ranges are not confidence intervals. Its matched candidates cover
+94.83% of baseline mass within the top 32 candidates, not the entire vocabulary.
+
+Mean within-context rank correlation is 0.656 for repeated-prefix uncertainty
+and 0.619 for repeated-prefix original. The uncertainty control fit has pooled
+correlation -0.013 and within-context correlation -0.043. Ordinary collection
+usually has too few alternative observations for within-context ranking.
+
+**Repeated-prefix coverage at novel contexts is zero in every seed.** Passive
+coverage is about 0.1% or less. This demonstrates local preference recovery;
+it does not establish a general-purpose stolen watermark, document detector,
+or successful removal.
+
+![Coverage and oracle agreement](prefix-results.png)
+
+[Aggregate results](results.summary.json) retain means, ranges, and valid seed
+counts. [Post-hoc diagnostics](posthoc-diagnostics.json) separately check sign
+imbalance and equal candidate subsets. Repeated-prefix uncertainty balanced sign
+accuracy is 87.7%, while always predicting its majority sign yields 69.1%
+ordinary accuracy. On identical matched candidate subsets, uncertainty improves
+repeated-prefix pooled rank correlation in all three seeds. These extra checks
+were not predeclared and do not isolate shrinkage from the other estimator changes.
+
+An exploratory reanalysis of the earlier Dolly corpus improves conditional
+AUROC from 0.587 to 0.688. On identical scorable documents it improves from
+0.618 to 0.717 (98 watermarked, 61 baseline). However, the new estimator's
+conditional false-positive rates are 13.6% (11/81) on baseline and 5.9% (6/102)
+on independent controls. Its watermarked pair coverage is only 4.45%, with
+143/256 watermarked documents abstaining. It is not a validated 5%-FPR detector.
+
+Validation: full local suite 1,251 passed / 18 optional skips; focused Spark
+suite 38 passed. All research data here are public local-model generations;
+no private Claude logs or lyrics are included. A Fable songwriting session was
+inventoried separately, but no unsupported cross-tokenizer watermark score or
+commercial-watermark recovery claim was produced.
