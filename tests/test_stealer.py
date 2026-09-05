@@ -263,3 +263,77 @@ def test_downloader_start_over_clears_stale_state_before_probe(monkeypatch, tmp_
     )
     assert calls == [0, 0]
     assert json.loads((out / "prompts.jsonl").read_text(encoding="utf-8")) == {"text": "fresh"}
+
+
+def test_build_rejects_missing_or_empty_baseline(tmp_path):
+    """Missing reference data must not become a constant pseudo-distribution."""
+    replies = tmp_path / "replies.jsonl"
+    replies.write_text('{"reply": "a b a b"}\n', encoding="utf-8")
+    out = tmp_path / "scorer.json"
+    args = argparse.Namespace(replies=str(replies), baseline=None, out=str(out))
+    with pytest.raises(SystemExit, match="baseline"):
+        steal.cmd_build(args)
+    empty = tmp_path / "empty.jsonl"
+    empty.write_text("", encoding="utf-8")
+    args.baseline = str(empty)
+    with pytest.raises(SystemExit, match="baseline"):
+        steal.cmd_build(args)
+    assert not out.exists()
+    with pytest.raises(ValueError, match="baseline"):
+        scorer.build_scorer(tokens.count_ngrams(["a b"], 1), ({}, {}, {}), 1)
+
+
+def test_shared_support_does_not_invent_context_difference():
+    """Extra vocabulary outside a matched context must not change its ratio."""
+    wm = tokens.count_ngrams(["a b", "extra"], 1)
+    base = tokens.count_ngrams(["a b"], 1)
+    table = scorer.build_scorer(wm, base, 1)
+    assert table["scorer"][scorer.context_key(("a",))][0]["score"] == 0.0
+
+
+def test_detect_abstains_on_no_matches(tmp_path, capsys):
+    counts = tokens.count_ngrams(["a b a b"], 1)
+    path = tmp_path / "table.json"
+    path.write_text(json.dumps(scorer.build_scorer(counts, counts, 1)), encoding="utf-8")
+    steal.main(["detect", "--s-star", str(path), "--text", "never observed words"])
+    result = json.loads(capsys.readouterr().out)
+    assert result["status"] == "insufficient_evidence"
+    assert result["mean"] is None
+    assert result["coverage"] == 0
+    assert result["eligible"] == 2
+    matched = scorer.score_sequence(scorer.load_scorer(path), ["a", "b"], 1)
+    assert matched["status"] == "uncalibrated"
+    assert matched["coverage"] == 1
+    assert matched["mean"] == 0
+
+
+def test_explicit_backend_queries_configured_model(monkeypatch, tmp_path):
+    """Exercise the corrected environment-based recipe without a live endpoint."""
+    monkeypatch.setenv("WATERMARKS_STEAL_BASE_URL", "http://127.0.0.1:8000/v1")
+    monkeypatch.setenv("WATERMARKS_STEAL_API_KEY", "test-placeholder")
+    monkeypatch.setenv("WATERMARKS_STEAL_MODEL", "local-test-model")
+    calls = []
+
+    def reply(*args):
+        calls.append(args)
+        return "model response"
+
+    monkeypatch.setattr(steal, "_openai_reply", reply)
+    prompts = tmp_path / "prompts.jsonl"
+    prompts.write_text('{"text":"Explain rain"}\n', encoding="utf-8")
+    output = tmp_path / "replies.jsonl"
+    steal.main(
+        [
+            "query",
+            "--prompts",
+            str(prompts),
+            "--out",
+            str(output),
+            "--backend",
+            "openai-compatible",
+        ]
+    )
+    assert calls == [
+        ("Explain rain", "http://127.0.0.1:8000/v1", "test-placeholder", "local-test-model", 512)
+    ]
+    assert json.loads(output.read_text())["reply"] == "model response"
