@@ -182,3 +182,21 @@ python3 stealer/steal.py detect --s-star s_star.json --text "Text to inspect"
 held-out coverage, calibrated detection, token alignment with known SynthID
 preferences, and an unwatermarked-versus-unwatermarked negative control. It is a
 research pilot, not a vendor detector or an integrated removal pipeline.
+
+### Experimental uncertainty-aware estimator
+
+`build --estimator uncertainty` retains evidence for both favored and suppressed
+next tokens. It requires each context in both corpora and shrinks noisy estimates
+toward zero. Its reported standard errors are approximate; scores are rankings,
+not calibrated detection probabilities. The default remains `legacy`.
+
+```sh
+python stealer/steal.py build --replies wm.jsonl --baseline baseline.jsonl --ctx 4 --estimator uncertainty --out s-star.json
+```
+
+Choose the matching model tokenizer with `--tokenizer` and pin its revision for
+model-level studies. A word-tokenized table cannot identify model-token watermarks.
+`--alpha` defaults to 0.5 for this estimator, and 0.4 for legacy. Legacy `--topk`
+and `--min-context` overrides are rejected for the new estimator, which retains
+all observed tokens at shared contexts. See the
+[controlled prefix experiment](../benchmarks/stealer-prefix/README.md).

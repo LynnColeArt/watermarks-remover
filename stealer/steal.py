@@ -158,14 +158,26 @@ def cmd_build(args) -> int:
     wm = count_ngrams(replies, args.ctx, tokenize)
     base = count_ngrams(baseline, args.ctx, tokenize)
 
-    built = scorer_mod.build_scorer(
-        wm, base, args.ctx, topk=args.topk, alpha=args.alpha, min_context=args.min_context
-    )
+    estimator = getattr(args, "estimator", "legacy")
+    alpha = args.alpha if args.alpha is not None else (0.5 if estimator == "uncertainty" else 0.4)
+    if estimator == "uncertainty":
+        import uncertainty
+
+        if args.topk != 50 or args.min_context != 1:
+            raise ValueError(
+                "--topk and --min-context overrides apply only to the legacy estimator"
+            )
+        built = uncertainty.build_scorer(wm, base, args.ctx, alpha=alpha)
+    else:
+        built = scorer_mod.build_scorer(
+            wm, base, args.ctx, topk=args.topk, alpha=alpha, min_context=args.min_context
+        )
+    built["config"]["estimator"] = estimator
     built["config"]["tokenizer"] = tokenizer_config
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(built, ensure_ascii=False), encoding="utf-8")
-    print(f"wrote {out} ({len(built['scorer'])} contexts, top-{args.topk})")
+    print(f"wrote {out} ({len(built['scorer'])} contexts, estimator={estimator})")
     return 0
 
 
@@ -216,7 +228,10 @@ def main(argv=None) -> int:
     b.add_argument("--tokenizer-revision", default=None, help="pin the tokenizer commit")
     b.add_argument("--ctx", type=int, default=8, help="context length in tokens")
     b.add_argument("--topk", type=int, default=50, help="keep top-k tokens per context")
-    b.add_argument("--alpha", type=float, default=0.4, help="add-alpha smoothing")
+    b.add_argument("--estimator", choices=["legacy", "uncertainty"], default="legacy")
+    b.add_argument(
+        "--alpha", type=float, default=None, help="smoothing (legacy: 0.4; uncertainty: 0.5)"
+    )
     b.add_argument("--min-context", type=int, default=1, help="min occurrences per context")
     b.add_argument("--out", required=True, help="output s*.json")
     b.set_defaults(func=cmd_build)

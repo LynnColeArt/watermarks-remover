@@ -1,0 +1,19 @@
+{
+  "status": "predeclared before collection",
+  "model": "HuggingFaceTB/SmolLM2-135M-Instruct",
+  "revision": "12fd25f77366fa6b3b4b768ec3050bf629380bac",
+  "anchors": 32,
+  "draws": 64,
+  "candidates": 32,
+  "seeds": [20260911, 20260922, 20260933],
+  "estimators": ["legacy add-alpha top-k", "signed shared-context log ratio with variance shrinkage"],
+  "strategies": ["64 independent next-token draws per anchor", "one 64-token continuation per anchor"],
+  "budget": "2048 training tokens per strategy per arm per seed; three arms; shared 1536-token unwatermarked discovery cost per seed",
+  "sampling": "full softmax, temperature 1, all tokenizer special tokens excluded, fixed length; fresh SynthID history per continuation",
+  "watermark": "public evaluate.KEYS, context 4, existing HF SynthID configuration; replay skipped calls to populate generated-token context",
+  "evaluation": "Exact watermark log probability ratio on top 32 baseline candidates; these oracle probabilities never enter fitting",
+  "primary": ["candidate coverage", "mean within-context Spearman on matched candidates", "sign accuracy for oracle effects of absolute magnitude >= 0.2"],
+  "splits": "32 queried anchors and 32 unqueried contexts scored separately; anchor evaluation measures local recovery, not novel-context generalization",
+  "controls": "independent unwatermarked control versus baseline fit for each estimator and strategy",
+  "limitations": ["fixed model and public key across three sampling/prompt seeds", "white-box collection/reset and oracle evaluation; estimator sees sampled token IDs only", "candidate selection uses oracle baseline top32, so metrics are conditional on plausible candidates", "no document-detection FPR or removal claim", "normal-approximation uncertainty is a ranking heuristic, not calibrated confidence"]
+}
