@@ -140,20 +140,20 @@ def cmd_query(args) -> int:
 
 
 def cmd_build(args) -> int:
-    """Derive the stolen scorer ``s*`` from replies and an optional baseline."""
+    """Derive the stolen scorer ``s*`` from replies and a required baseline."""
 
     replies = read_replies(Path(args.replies))
-    baseline = read_replies(Path(args.baseline)) if args.baseline else []
+    if not args.baseline:
+        raise SystemExit("build requires a non-empty unwatermarked --baseline corpus")
+    baseline = read_replies(Path(args.baseline))
+    if not baseline:
+        raise SystemExit("no baseline replies read; provide a non-empty --baseline corpus")
     if not replies:
         raise SystemExit(f"no watermarked replies read from {args.replies}")
     print(f"building s* from {len(replies)} watermarked replies, {len(baseline)} baseline replies")
 
     wm = count_ngrams(replies, args.ctx, default_tokenize)
-    if baseline:
-        base = count_ngrams(baseline, args.ctx, default_tokenize)
-    else:
-        base = ({}, {}, {})
-        print("  note: no baseline supplied -> unigram fallback only", file=sys.stderr)
+    base = count_ngrams(baseline, args.ctx, default_tokenize)
 
     built = scorer_mod.build_scorer(
         wm, base, args.ctx, topk=args.topk, alpha=args.alpha, min_context=args.min_context
@@ -174,7 +174,6 @@ def cmd_detect(args) -> int:
     tokens = default_tokenize(text)
     result = scorer_mod.score_sequence(scorer, tokens, ctx)
     result["tokens"] = len(tokens)
-    result["mean"] = round(result["score"] / result["applied"], 5) if result["applied"] else 0.0
     print(json.dumps(result, ensure_ascii=False))
     return 0
 
@@ -198,7 +197,7 @@ def main(argv=None) -> int:
 
     b = sub.add_parser("build", help="derive s* from replies and a baseline")
     b.add_argument("--replies", required=True, help="watermarked replies (JSONL)")
-    b.add_argument("--baseline", default=None, help="non-watermarked baseline replies (JSONL)")
+    b.add_argument("--baseline", required=True, help="non-watermarked baseline replies (JSONL)")
     b.add_argument("--ctx", type=int, default=8, help="context length in tokens")
     b.add_argument("--topk", type=int, default=50, help="keep top-k tokens per context")
     b.add_argument("--alpha", type=float, default=0.4, help="add-alpha smoothing")

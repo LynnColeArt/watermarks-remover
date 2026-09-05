@@ -31,9 +31,9 @@ The conversation describes three steps:
 1. **Query** the watermarked model with many benign prompts; collect long
    watermarked replies.  (`steal.py query`)
 2. **Count** how often each next token follows each short context in the
-   watermarked replies, vs a non-watermarked baseline (a different model or
-   old unwatermarked dumps — the baseline model need not match the watermarked
-   one).  (`steal.py build`)
+   watermarked replies, vs a non-watermarked baseline (preferably the same
+   model with watermarking disabled; a different model introduces style and
+   topic confounders).  (`steal.py build`)
 3. Convert the ratios into a score `s*(token | context)`: high ⇒ "likely green
    / watermark-boosted."  The output is **not** the secret key, but a reusable
    table/function.  (`steal.py build --out s_star.json`)
@@ -51,13 +51,13 @@ two of them**:
 | # | Role | Which model | Used by |
 | --- | --- | --- | --- |
 | 1 | **Target** — the watermarked model whose mark we extract | the model you want to cleanse | `steal.py query` (first run) |
-| 2 | **Baseline** — non-watermarked reference distribution | a *different* model (or old unwatermarked dumps) | `steal.py query` (second run) |
+| 2 | **Baseline** — non-watermarked reference distribution | preferably the same model, watermark disabled | `steal.py query` (second run) |
 | 3 | **Scrubber / paraphraser** — applies `s*` to logits at cleanup time | e.g. DIPPER | downstream; **not** called by `steal.py` |
 
 `build` and `detect` are **model-free**: they derive `s*` and score text with
 deterministic counting, so there is no third "analysis" LLM.  The baseline `#2`
-may be a different model from the target `#1` — the question the shared
-conversation started from.
+can be a different model from the target `#1`, but its scores then also
+reflect model differences. That setting needs separate controlled evaluation.
 
 ## Quick start
 
@@ -65,12 +65,11 @@ conversation started from.
 # 1. Corpus of prompts (30k C4 RealNewsLike passages) -> stealer/prompts/prompts.jsonl
 python3 stealer/download_prompts.py --count 30000
 
-# 2. Collect watermarked replies (dry-run by default; point at a model for real)
+# 2. Collect watermarked replies (configure URL/key first; see below)
 python3 stealer/steal.py query --prompts stealer/prompts/prompts.jsonl \
   --out stealer/replies.jsonl --backend openai-compatible --model <model>
 
-# 2b. Non-watermarked baseline replies from a different model (optional but
-#     recommended; without it build() falls back to unigram statistics)
+# 2b. Required unwatermarked baseline replies (prefer the same model, watermark off)
 python3 stealer/steal.py query --prompts stealer/prompts/prompts.jsonl \
   --out stealer/baseline.jsonl --backend openai-compatible --model <baseline-model>
 
@@ -86,21 +85,22 @@ python3 stealer/steal.py detect --text "some text" --s-star stealer/s_star.json 
 
 Each `query` run talks to **one** model, so the target and baseline are each
 configured by their own `query` invocation (see the quick start above).  Point
-the target run at the model you want to cleanse and the baseline run at a
-different model:
+the target run at the watermarked model and the baseline run at an
+unwatermarked reference:
 
 ```bash
 # 1. Target — the watermarked model whose mark we're extracting.
 WATERMARKS_STEAL_BASE_URL=<url> WATERMARKS_STEAL_API_KEY=<key> \
 WATERMARKS_STEAL_MODEL=<target-model> \
   python3 stealer/steal.py query --prompts stealer/prompts/prompts.jsonl \
-  --out stealer/replies.jsonl
+  --out stealer/replies.jsonl --backend openai-compatible --allow-remote
 
-# 2. Baseline — a *different*, non-watermarked model.
+# 2. Baseline — preferably the same model with watermarking disabled.
 #    A loopback endpoint (e.g. local Ollama) needs no --allow-remote.
-WATERMARKS_STEAL_BASE_URL=<url> WATERMARKS_STEAL_MODEL=<baseline-model> \
+WATERMARKS_STEAL_BASE_URL=<loopback-url> WATERMARKS_STEAL_API_KEY=<local-key-or-placeholder> \
+WATERMARKS_STEAL_MODEL=<baseline-model> \
   python3 stealer/steal.py query --prompts stealer/prompts/prompts.jsonl \
-  --out stealer/baseline.jsonl
+  --out stealer/baseline.jsonl --backend openai-compatible
 ```
 
 `query` reads these vars from the environment.  They mirror the repo's
@@ -116,8 +116,20 @@ rewrite backend's settings never leak into a steal run:
 
 Keys are read from the environment only.  `dry-run` writes deterministic
 placeholder replies so the rest of the pipeline runs without a model.  A
-baseline is optional but recommended — without it `build()` falls back to
-unigram statistics.
+non-empty baseline is required. For contexts absent from that corpus, `build()`
+uses the baseline's unigram distribution. No-baseline builds previously used a
+constant pseudo-probability instead of corpus statistics; they are now rejected.
+Rebuild tables produced without a baseline before using them in experiments.
+
+`detect` reports `applied`, `eligible`, `coverage`, and `mean`. Zero matches
+produce `mean: null` and `status: "insufficient_evidence"`. With matches the
+status is `"uncalibrated"`: this is a corpus-contrast score, not a watermark
+verdict, probability, or proof of removal. The word tokenizer and exact-context
+lookups are a prototype; held-out validation is needed before interpreting scores.
+
+The `query` default remains `dry-run`; environment variables do not select a
+backend. Use `--backend openai-compatible` for real requests. Query output is
+append-only: rerunning a collection against the same file duplicates prompts.
 
 ## Downloader
 

@@ -48,15 +48,19 @@ def build_scorer(
     the top ``topk`` highest-ratio tokens are kept, sorted descending.
 
     The baseline's per-context distribution is used when that context was
-    observed; otherwise the baseline unigram distribution is the fallback, so a
-    baseline model different from the watermarked model still works.
+    observed; otherwise the baseline unigram distribution is the fallback, but a
+    different baseline model introduces additional distributional confounders.
     """
 
+    if context_len < 1 or topk < 1 or min_context < 1 or alpha <= 0:
+        raise ValueError("context_len, topk, min_context and alpha must be positive")
     wm_map, wm_totals, wm_unis = wm
     base_map, base_totals, base_unis = base
-    wm_vocab = max(len(wm_unis), 1)
-    base_vocab = max(len(base_unis), 1)
-    base_uni_total = sum(base_unis.values()) or 1
+    if not base_unis:
+        raise ValueError("a non-empty baseline corpus is required")
+    # Compare distributions over the same support, including baseline-only tokens.
+    vocab = max(len(wm_unis.keys() | base_unis.keys()), 1)
+    base_uni_total = sum(base_unis.values())
     eps = 1e-6
 
     scorer: dict[str, list[dict[str, float]]] = {}
@@ -68,11 +72,11 @@ def build_scorer(
         base_bucket = base_map.get(context)
         scored: list[tuple[str, float]] = []
         for tok, cnt in bucket.items():
-            p_wm = _prob(cnt, context_total, wm_vocab, alpha)
+            p_wm = _prob(cnt, context_total, vocab, alpha)
             if base_bucket is not None:
-                p_base = _prob(base_bucket.get(tok, 0), base_total, base_vocab, alpha)
+                p_base = _prob(base_bucket.get(tok, 0), base_total, vocab, alpha)
             else:
-                p_base = _prob(base_unis.get(tok, 0), base_uni_total, base_vocab, alpha)
+                p_base = _prob(base_unis.get(tok, 0), base_uni_total, vocab, alpha)
             scored.append((tok, math.log((p_wm + eps) / (p_base + eps))))
         scored.sort(key=lambda item: item[1], reverse=True)
         top = scored[:topk]
@@ -102,11 +106,13 @@ def load_scorer(path) -> dict:
 def score_sequence(scorer: dict, tokens: list[str], context_len: int) -> dict:
     """Aggregate ``s*`` over a token sequence (a candidate text).
 
-    Returns ``{"score", "applied"}``: the summed ``s*`` for every (context,
-    token) pair found in the table and how many lookups hit.  A higher mean
-    means the text leans toward tokens the watermark boosts.
+    Reports the sum and mean on matched pairs, eligible pairs, and coverage.
+    No matches means insufficient evidence, never an unwatermarked verdict.
+    Nonempty scores are uncalibrated corpus contrasts, not detection decisions.
     """
 
+    if context_len < 1:
+        raise ValueError("context_len must be positive")
     table = scorer.get("scorer", {})
     total = 0.0
     applied = 0
@@ -121,7 +127,15 @@ def score_sequence(scorer: dict, tokens: list[str], context_len: int) -> dict:
                 total += item["score"]
                 applied += 1
                 break
-    return {"score": round(total, 5), "applied": applied}
+    eligible = max(0, len(tokens) - context_len)
+    return {
+        "score": round(total, 5),
+        "applied": applied,
+        "eligible": eligible,
+        "coverage": applied / eligible if eligible else 0.0,
+        "mean": round(total / applied, 5) if applied else None,
+        "status": "uncalibrated" if applied else "insufficient_evidence",
+    }
 
 
 def apply_delta(
